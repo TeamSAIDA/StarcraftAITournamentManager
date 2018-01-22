@@ -16,8 +16,7 @@ public class ClientMain
 		}
 		else
 		{
-			System.err.println("\n\nPlease provide client settings file as command line argument.\n");
-			System.exit(-1);
+			ClientSettings.Instance().parseSettingsFile("client_settings.json");
 		}
 		
 		Client client = new Client();

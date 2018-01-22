@@ -35,5 +35,6 @@ server/winpercentage.txt
 server/results.txt
 server/games.txt
 server/html/*.txt
+server/html/results
 *.project
 .classpath

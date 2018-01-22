@@ -14,8 +14,7 @@ public class ServerMain
 		}
 		else
 		{
-			System.err.println("\n\nPlease provide server settings file as command line argument.\n");
-			System.exit(-1);
+			ServerSettings.Instance().parseSettingsFile("server_settings.json");
 		}
 		
 		Server.Instance().start();
