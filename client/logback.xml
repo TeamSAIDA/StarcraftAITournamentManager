@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+	  <!-- encoders are assigned the type
+	       ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+	  <encoder>
+	  	<pattern>%-32(%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread]) [%-5level] %20.-20C{0} (%-4(%L\)) %msg %n</pattern>
+	  </encoder>
+	</appender>
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	  <file>./logs/server_log.txt</file>
+	  <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+	    <!-- rollover daily -->
+	    <fileNamePattern>./logs/server_log-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+	    <timeBasedFileNamingAndTriggeringPolicy
+	          class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+	      <!-- or whenever the file size reaches 100MB -->
+	      <maxFileSize>10MB</maxFileSize>
+	    </timeBasedFileNamingAndTriggeringPolicy>
+	  </rollingPolicy>
+	  <encoder>
+	    <pattern>%-32(%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread]) [%-5level] %20.-20C{0} (%-4(%L\)) %msg %n</pattern>
+	  </encoder>
+	</appender>
+	
+  <root level="DEBUG">
+      <appender-ref ref="STDOUT" />
+      <appender-ref ref="FILE" />
+  </root>
+</configuration>

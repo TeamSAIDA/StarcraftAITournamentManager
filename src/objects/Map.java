@@ -2,7 +2,11 @@ package objects;
 
 import java.io.File;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Map{
+	static final private Logger LOG = LoggerFactory.getLogger(Map.class);
 
 	private String mapName;
 
@@ -28,6 +32,6 @@ public class Map{
 
 	public void print() 
 	{
-		System.out.println(this.mapName + " -> " + this.mapLocation);
+		LOG.debug(this.mapName + " -> " + this.mapLocation);
 	}
 }

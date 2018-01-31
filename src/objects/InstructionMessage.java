@@ -11,6 +11,7 @@ public class InstructionMessage implements Message
 	
 	public BWAPISettings 		bwapi;
 	
+	public int 					turn;
 	public int 					game_id;
 	public int 					round_id;
 	
@@ -28,6 +29,7 @@ public class InstructionMessage implements Message
 	{
 		hostBot = game.getHomebot();
         awayBot = game.getAwaybot();
+        turn = game.getTurn();
         game_id = game.getGameID();
         round_id = game.getRound();
         isHost = host;

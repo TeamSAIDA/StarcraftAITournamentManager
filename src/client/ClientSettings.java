@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Vector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
@@ -13,6 +16,7 @@ import objects.BWAPISettings;
 
 public class ClientSettings
 {	
+	static final private Logger LOG = LoggerFactory.getLogger(ClientSettings.class);
 	public String			ClientStarcraftDir;
 	
 	public String			TournamentModuleFilename;
@@ -45,7 +49,7 @@ public class ClientSettings
 			br.close();
 			
 			ClientStarcraftDir = jo.get("ClientStarcraftDir").asString();
-			System.out.println("StarCraft Dir:   " + ClientStarcraftDir);
+			LOG.debug("StarCraft Dir:   " + ClientStarcraftDir);
 			DefaultBWAPISettingsFileName = jo.get("DefaultBWAPISettings").asString();
 			TournamentModuleFilename = jo.get("TournamentModule").asString();
 			ServerAddress = jo.get("ServerAddress").asString();
@@ -65,8 +69,7 @@ public class ClientSettings
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error parsing settings file, exiting\n");
-			e.printStackTrace();
+			LOG.error("Error parsing settings file, exiting\n", e);
 			System.exit(-1);
 		}
 		

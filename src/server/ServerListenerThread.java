@@ -3,10 +3,12 @@ package server;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 
-import server.ServerClientThread;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class ServerListenerThread extends Thread 
 {
+	static private final Logger LOG = LoggerFactory.getLogger(ServerListenerThread.class);
 	private ServerSocket 	serverSocket = null;
 	private Server 			server;
 
@@ -21,7 +23,7 @@ class ServerListenerThread extends Thread
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Listener: Could not listen on port " + server.getPort());
+			LOG.error("Listener: Could not listen on port " + server.getPort(), e);
 			System.exit(-1);
 		}
 	}
@@ -40,8 +42,7 @@ class ServerListenerThread extends Thread
 			} 
 			catch (Exception e) 
 			{
-				System.out.println("Listener: Error in run() main loop");
-				e.printStackTrace();
+				LOG.error("Listener: Error in run() main loop", e);
 				System.exit(-1);
 			}
 		}
@@ -61,8 +62,7 @@ class ServerListenerThread extends Thread
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Listener: Could not close.");
-			e.printStackTrace();
+			LOG.error("Listener: Could not close.", e);
 		}
 	}
 }

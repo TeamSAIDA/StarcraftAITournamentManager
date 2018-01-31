@@ -3,8 +3,12 @@ package utility;
 import java.io.*;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class WindowsCommandTools
 {
+	static final private Logger LOG = LoggerFactory.getLogger(WindowsCommandTools.class);
 	public static void DeleteDirectory(String dir) 
 	{
 		try
@@ -24,7 +28,7 @@ public class WindowsCommandTools
 		{
 			String windowsCommandPrefix = "CMD /C ";
 			String completeCommand = windowsCommandPrefix + "cd /D " + dir + " & " + exe;
-			System.out.println(completeCommand);
+			LOG.debug(completeCommand);
 			Process proc = Runtime.getRuntime().exec(completeCommand);
 			
 			if (waitFor)
@@ -34,7 +38,7 @@ public class WindowsCommandTools
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			
 			if (exitIfException)
 			{
@@ -91,7 +95,7 @@ public class WindowsCommandTools
 		} 
 		catch (IOException e) 
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 
 		return running;
@@ -127,7 +131,7 @@ public class WindowsCommandTools
 		{
 			String windowsCommandPrefix = "CMD /C ";
 			String completeCommand = windowsCommandPrefix + command;
-			System.out.println("\n" + completeCommand);
+			LOG.debug("\n" + completeCommand);
 			Runtime.getRuntime().exec(command);
 		}
 		catch (Exception e)
@@ -142,7 +146,7 @@ public class WindowsCommandTools
 		{
 			String windowsCommandPrefix = "CMD /C ";
 			String completeCommand = windowsCommandPrefix + command;
-			System.out.println("\n" + completeCommand);
+			LOG.debug("\n" + completeCommand);
 			Process proc = Runtime.getRuntime().exec(windowsCommandPrefix + command);
 						
 			if (waitFor)
@@ -152,8 +156,7 @@ public class WindowsCommandTools
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
-			System.err.println("\n\nCommandTools: Could not run command:\n" + command + "\n\n");
+			LOG.error("\n\nCommandTools: Could not run command:\n" + command + "\n\n", e);
 			
 			if (exitIfException)
 			{
@@ -168,7 +171,7 @@ public class WindowsCommandTools
 		{
 			String windowsCommandPrefix = "CMD /C runas /user:Administrator ";
 			String completeCommand = windowsCommandPrefix + command;
-			System.out.println("\n" + completeCommand);
+			LOG.debug("\n" + completeCommand);
 			Process proc = Runtime.getRuntime().exec(windowsCommandPrefix + command);
 						
 			if (waitFor)
@@ -178,8 +181,7 @@ public class WindowsCommandTools
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
-			System.err.println("\n\nCommandTools: Could not run command:\n" + command + "\n\n");
+			LOG.error("\n\nCommandTools: Could not run command:\n" + command + "\n\n", e);
 			
 			if (exitIfException)
 			{
@@ -206,7 +208,7 @@ public class WindowsCommandTools
 		String cmd = "reg add " + keyName + " /f /v " + valueName + " /t " + type + " /d " + data;
 		RunWindowsCommand(cmd, true, false);
 		
-		System.out.println(cmd);
+		LOG.debug(cmd);
 	}
 	
 	public static void main(String[] args)

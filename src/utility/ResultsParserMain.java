@@ -4,8 +4,6 @@ import server.ServerSettings;
 
 public class ResultsParserMain
 {
-	public static String serverSettingsFile;
-	
 	public static void main(String[] args) throws Exception
 	{
 		if (args.length == 1)
@@ -22,7 +20,7 @@ public class ResultsParserMain
 		
 	}
 	
-	public synchronized static void writeHTMLFiles() throws Exception
+	private synchronized static void writeHTMLFiles() throws Exception
 	{
 		try
 		{

@@ -5,10 +5,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import objects.*;
 
 public class ClientListenerThread extends Thread
 {
+	static final private Logger LOG = LoggerFactory.getLogger(ClientListenerThread.class);
 	private Client client;
 	private Socket socket = null;
 	private ObjectInputStream ois = null;
@@ -18,7 +22,7 @@ public class ClientListenerThread extends Thread
 
 	public ClientListenerThread(Client client) 
 	{
-		System.out.println("ClientListenerThread constructor");
+		LOG.debug("ClientListenerThread constructor");
 		this.client = client;
 	}
 
@@ -28,7 +32,7 @@ public class ClientListenerThread extends Thread
 		int port = Integer.parseInt(temp.substring(temp.indexOf(':') + 1));
 		String address = temp.substring(0, temp.indexOf(':'));
 		
-		System.out.println("Connecting to Server @ " + address + ":" + port + "\n");
+		LOG.debug("Connecting to Server @ " + address + ":" + port + "\n");
 		Client.log("Connecting to Server @ " + address + ":" + port + "\n");
 		
 		while(true)
@@ -43,7 +47,7 @@ public class ClientListenerThread extends Thread
 			} 
 			catch (Exception e) 
 			{
-				System.out.println("Couldn't connect to server, trying again in 5 seconds.\n");
+				LOG.debug("Couldn't connect to server, trying again in 5 seconds.\n");
 				Client.log("Couldn't connect to server, trying again in 5 seconds.\n");
 				connected = false;
 			}
@@ -59,8 +63,7 @@ public class ClientListenerThread extends Thread
 			ois = new ObjectInputStream(socket.getInputStream());
 			oos = new ObjectOutputStream(socket.getOutputStream());
 		} catch (IOException e) {
-			System.out.println("in or out failed");
-			e.printStackTrace();
+			LOG.error("in or out failed", e);
 			System.exit(-1);
 		}
 	}
@@ -72,7 +75,7 @@ public class ClientListenerThread extends Thread
 	
 	public void run()
 	{
-		System.out.println("ClientListenerThread run()");
+		LOG.debug("ClientListenerThread run()");
 		
 		setupSocket();
 		setupStreams();
@@ -89,17 +92,39 @@ public class ClientListenerThread extends Thread
 			try 
 			{
 				//Client.log("CListner: Waiting for Message...\n");
+				LOG.debug("CListner: Waiting for Message...");
 				Message m = (Message) ois.readObject();
 				Client.log("CListner: Message recieved: " + m.toString() + "\n");
+				LOG.debug("CListner: Message recieved: " + m.toString());
 				client.receiveMessage(m);
 			} 
 			catch (Exception e1) 
 			{
 				connected = false;
-				Client.log("Server disconnected, shutting down...\n");
-				System.err.println("Cannot contact server, shutting down");
-				e1.printStackTrace();
-				client.shutDown();
+				Client.log("Server disconnected, reconnecting...\n");
+				LOG.error("Cannot contact server, reconnecting", e1);
+				client.gameInit();
+				
+				try {
+					ois.close();
+				} catch (IOException e) {
+					LOG.error(e.getMessage(), e);
+				}
+				try {
+					oos.close();
+				} catch (IOException e) {
+					LOG.error(e.getMessage(), e);
+				}
+				try {
+					socket.close();
+				} catch (IOException e) {
+					LOG.error(e.getMessage(), e);
+				}
+				
+				setupSocket();
+				setupStreams();
+
+				client.setStatus(ClientStatus.READY);
 			}
 		}	
 	}
@@ -114,9 +139,7 @@ public class ClientListenerThread extends Thread
 		}
 		catch (IOException e) 
 		{
-			System.err.println("sendMessageToServer() exception");
-			e.printStackTrace();
-			System.out.flush();
+			LOG.error("sendMessageToServer() exception", e);
 			System.exit(-1);
 		}
 	}

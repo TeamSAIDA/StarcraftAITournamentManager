@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import server.CallbackTaskAbstract;
+
 public class GameStorage 
 {
 	private TreeMap<Integer, Game> gamesToPlay;
@@ -28,7 +30,9 @@ public class GameStorage
 		Iterator<Integer> it = gameIDs.iterator();
 		while (it.hasNext()) 
 		{
-		    gamesToPlay.remove(it.next());
+			Integer gameId = it.next();
+		    gamesToPlay.remove(gameId);
+		    CallbackTaskAbstract.callbackData.remove(gameId);
 		}
 	}
 	

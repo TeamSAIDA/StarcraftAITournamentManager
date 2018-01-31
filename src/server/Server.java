@@ -5,6 +5,9 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import utility.*;
 import objects.*;
 
@@ -12,6 +15,8 @@ import java.nio.channels.FileChannel;
 
 public class Server  extends Thread 
 {
+	static final private Logger LOG = LoggerFactory.getLogger(Server.class);
+	
     private Vector<ServerClientThread> 		clients;							
     private Vector<ServerClientThread> 		free;								
 	
@@ -60,19 +65,12 @@ public class Server  extends Thread
 
 	public void run()
 	{
-		if (!games.hasMoreGames())
-		{
-			System.err.println("Server: Games list had no valid games in it");
-			System.exit(-1);
-		}
-		
 		int neededClients = 2;
 		int iterations = 0;
 		
 		Game nextGame = null;
 		
 		//only one message of each kind is logged per instance
-		boolean notEnoughClients = false;
 		boolean requirementsNotMet = false;
 		
 		// keep trying to schedule games
@@ -84,33 +82,9 @@ public class Server  extends Thread
 				Thread.sleep(gameRescheduleTimer);
 				updateResults(iterations++);
 				
-				if (!games.hasMoreGames())
-				{
-					if (free.size() == clients.size())
-					{
-						log("No more games in games list, please shut down tournament!\n");
-						break;
-					}
-					else
-					{
-						log("No more games in games list, please wait for all games to finish.\n");
-						while (free.size() < clients.size())
-	                    {
-	                        Thread.sleep(gameRescheduleTimer);
-	                        updateResults(iterations++);
-	                    }
-					}
-					continue;
-				}
-				
 				// we can't start a game if we don't have enough clients
 				if (free.size() < neededClients) 
 				{
-					if (!notEnoughClients)
-					{
-						log("Not enough clients to start next game. Waiting for more free clients.\n");
-						notEnoughClients = true;
-					}
 					continue;
 				}
 				
@@ -143,7 +117,7 @@ public class Server  extends Thread
 						continue;
 					}
 				}
-				else if (startingBots.isEmpty())
+				else if (startingBots.isEmpty() && games.hasMoreGames())
 				{
 					// can only start one game at a time, but none others are starting
 					nextGame = games.getNextGame(null, freeClientProperties, ServerSettings.Instance().EnableBotFileIO);
@@ -176,7 +150,7 @@ public class Server  extends Thread
 				if(ServerSettings.Instance().EnableBotFileIO) {
 					
 					//check if starting a new round
-					if (previousScheduledGame != null && (nextGame.getRound() > previousScheduledGame.getRound()))
+					if (previousScheduledGame != null && (nextGame.getRound() > previousScheduledGame.getRound() || (nextGame.getRound() < previousScheduledGame.getRound() && nextGame.getRound() == 0)))
 	                {
 						//check if all games from previous round are finished
 						if (free.size() < clients.size())
@@ -198,14 +172,13 @@ public class Server  extends Thread
 	                }
 				}
 				
-				notEnoughClients = false;
 				requirementsNotMet = false;
 				start1v1Game(nextGame);
 				previousScheduledGame = nextGame;
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				LOG.error(e.getMessage(), e);
 				log(e.toString() + "\n");
 				continue;
 			}
@@ -599,14 +572,15 @@ public class Server  extends Thread
 		try 
 		{
 			log("Recieving Replay: (" + game.getGameID() + " / " + game.getRound() + ")\n");				// EXCEPTION HERE
-			System.out.println("Recieving Replay: (" + game.getGameID() + " / " + game.getRound() + ")\n");
+			LOG.debug("Recieving Replay: (" + game.getGameID() + " / " + game.getRound() + ")\n");
 			Game g = games.lookupGame(game.getGameID());
 			g.updateWithGame(game);
 			appendGameData(g);
+			CallbackTaskAbstract.callbackData.addResult(g);
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			log("Error Receiving Game Results\n");
 		}	
     }
@@ -618,7 +592,7 @@ public class Server  extends Thread
     
     private synchronized void appendGameData(Game game) 
 	{
-    	System.out.println("Writing out replay data for gameID " + game.getGameID());
+    	LOG.debug("Writing out replay data for gameID " + game.getGameID());
         try 
 		{
             FileWriter fstream = new FileWriter(ServerSettings.Instance().ResultsFile, true);
@@ -628,7 +602,7 @@ public class Server  extends Thread
         } 
 		catch (Exception e) 
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
         }
     }
     
@@ -657,30 +631,46 @@ public class Server  extends Thread
     
     synchronized public void killClient(String ip) 
 	{
-        System.out.println("Attempting to kill client: " + ip);
+    	LOG.debug("Attempting to kill client: " + ip);
         for (int i = 0; i < clients.size(); i++) 
 		{
             if (clients.get(i).getAddress().toString().contains(ip)) 
 			{
-            	System.out.println("Client Found\n");
+            	LOG.debug("Client Found\n");
                 try
 				{
 					clients.get(i).sendMessage(new ClientShutdownMessage());
 					clients.get(i).stopThread();
 					free.remove(clients.get(i));
-	                	                clients.remove(i);
-					System.out.println("Client Found and Stopped\n");
+					clients.remove(i);
+					LOG.debug("Client Found and Stopped\n");
 					gui.RemoveClient(ip);
 					log("Client removed: " + ip.replaceFirst("^.*/", "") + "\n");
 				}
                 catch (Exception e)
 				{
-					e.printStackTrace();
+                	LOG.error(e.getMessage(), e);
 				}
                 return;
             }
         }
     }
+    
+	synchronized public void keepAlive() {
+    	try
+    	{
+    		LOG.debug("[Start] Send KeepAlive Message");
+	        for (int i = 0; i < clients.size(); i++) 
+			{
+	            clients.get(i).sendMessage(new KeepAliveMessage(clients.get(i).address.toString()));
+	        }
+	        LOG.debug("[End] Send KeepAlive Message");
+    	}
+    	catch (Exception e)
+    	{
+    		LOG.error(e.getMessage(), e);
+    	}
+	}
 }
 
 class FileCopyThread extends Thread

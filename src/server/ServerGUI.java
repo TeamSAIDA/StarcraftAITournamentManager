@@ -7,13 +7,18 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import objects.Bot;
 import utility.FileUtils;
 import utility.GameListGenerator;
 import utility.ResultsParser;
 
 import java.awt.event.*;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -24,6 +29,7 @@ import java.util.regex.Pattern;
 
 public class ServerGUI 
 {
+	static private final Logger LOG = LoggerFactory.getLogger(ServerGUI.class);
 	Server		server;
 	
     private 	JFrame			mainFrame;
@@ -373,20 +379,18 @@ public class ServerGUI
 	
 	public boolean handleTournamentResume()
 	{
-		int resumeTournament = JOptionPane.NO_OPTION;
 		ResultsParser rp = new ResultsParser(ServerSettings.Instance().ResultsFile);
 		
-		if (rp.numResults() > 0)
+		if (rp.numResults() > 0 && "ask".equals(ServerSettings.Instance().ResumeTournament))
 		{
+			int resumeTournament = JOptionPane.NO_OPTION;
 			resumeTournament = JOptionPane.showConfirmDialog(mainFrame, "Results found in " + ServerSettings.Instance().ResultsFile + ", resume tournament from games list in " + ServerSettings.Instance().GamesListFile + " ?" , "Resume Tournament Confirmation", JOptionPane.YES_NO_OPTION);
-		}
 			
-		if (resumeTournament == JOptionPane.YES_OPTION)
-		{
-			resumedTournament = true;
+			return resumeTournament == JOptionPane.YES_OPTION;
 		}
-		
-		return resumedTournament;
+		else {
+			return "yes".equals(ServerSettings.Instance().ResumeTournament);
+		}
 	}
 	
 	private void handleTournamentData()
@@ -439,7 +443,7 @@ public class ServerGUI
 	private void handleNoGamesFile()
 	{
 		// if the games list file doesn't exist
-		if (!new File(ServerSettings.Instance().GamesListFile).exists())
+		if (isGameListEmpty())
 		{
 			int generate = JOptionPane.showConfirmDialog(mainFrame, "No games list was found.\nGenerate a new round robin games list file?", "Generate Games List?", JOptionPane.YES_NO_OPTION);
 			
@@ -449,15 +453,34 @@ public class ServerGUI
 				JSpinner spinner = new JSpinner(sModel);
 	
 				JOptionPane.showOptionDialog(mainFrame, spinner, "Enter Number of Rounds Per Map:", JOptionPane.PLAIN_MESSAGE, JOptionPane.QUESTION_MESSAGE, null, null, null);
-				GameListGenerator.GenerateGames(Integer.parseInt("" + spinner.getValue()), ServerSettings.Instance().MapVector, ServerSettings.Instance().BotVector, ServerSettings.Instance().TournamentType);
+				GameListGenerator.GenerateGames(0, 0, Integer.parseInt("" + spinner.getValue()), ServerSettings.Instance().MapVector, ServerSettings.Instance().BotVector, ServerSettings.Instance().TournamentType);
 			
 				logText(getTimeStamp() + " " + "Generating Round Robin Tournament With " + spinner.getValue() + " Rounds.\n");
 			}
 
-			if (!new File(ServerSettings.Instance().GamesListFile).exists()) { System.err.println("ServerSettings: GamesListFile (" + ServerSettings.Instance().GamesListFile + ") does not exist"); System.exit(-1); }
+			if (!new File(ServerSettings.Instance().GamesListFile).exists()) { LOG.error("ServerSettings: GamesListFile (" + ServerSettings.Instance().GamesListFile + ") does not exist"); System.exit(-1); }
 		}
 	}
 	
+	private boolean isGameListEmpty() {
+		// 파일이 없으면 true
+		if (!new File(ServerSettings.Instance().GamesListFile).exists()) {
+			return true;
+		}
+		// 파일에 내용이 없으면 true
+		try (BufferedReader br = new BufferedReader(new FileReader(ServerSettings.Instance().GamesListFile))) {
+			String line = br.readLine();
+			while (line != null && line.startsWith("#")) 
+			{
+				line = br.readLine();
+			}
+			
+			return line == null;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private void setupTimer()
 	{
 		startTime = Calendar.getInstance().getTime();

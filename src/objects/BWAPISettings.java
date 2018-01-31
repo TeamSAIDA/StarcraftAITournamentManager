@@ -2,8 +2,12 @@ package objects;
 
 import java.io.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class BWAPISettings implements Serializable, Cloneable 
 {
+	static final private Logger LOG = LoggerFactory.getLogger(BWAPISettings.class);
 	/**
 	 * 
 	 */
@@ -229,8 +233,7 @@ public class BWAPISettings implements Serializable, Cloneable
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error loading BWAPI default settings file\n");
-			e.printStackTrace();
+			LOG.error("Error loading BWAPI default settings file\n", e);
 			System.exit(-1);
 		}
 	}

@@ -5,8 +5,12 @@ import java.util.*;
 import java.net.URI;
 import java.util.zip.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ZipTools
 {
+	static final private Logger LOG = LoggerFactory.getLogger(ZipTools.class);
 	public static void main(String[] args) throws Exception
 	{
 		//byte[] b = ZipToByteArray(new File(args[0]));
@@ -14,10 +18,10 @@ public class ZipTools
 		
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		
-		System.out.println("Loading Zip File: " + args[0]);
+		LOG.debug("Loading Zip File: " + args[0]);
 		LoadZipFileToStream(new File(args[0]), bos);
 		
-		System.out.println("File loaded " + bos.size() + ", Unzipping File");
+		LOG.debug("File loaded " + bos.size() + ", Unzipping File");
 		UnzipStreamToDir(new ByteArrayInputStream(bos.toByteArray()), new File("test"));
 	}
 	
@@ -44,7 +48,7 @@ public class ZipTools
 	// If the file is a directory, all files in the directory are zipped
 	public static void ZipDirToStream(File file, OutputStream out) throws IOException 
 	{
-		System.out.println("Zipping Dir: " + file.getPath());
+		LOG.debug("Zipping Dir: " + file.getPath());
 			
 		URI base = file.toURI();
 		Deque<File> queue = new LinkedList<File>();
@@ -80,7 +84,7 @@ public class ZipTools
 							copy(fis, zout);
 							fis.close();
 							zout.closeEntry();
-							//System.out.println("Zipped: " + name);
+							LOG.debug("Zipped: " + name);
 						}
 					}
 				}

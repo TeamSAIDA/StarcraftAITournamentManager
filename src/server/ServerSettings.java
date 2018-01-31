@@ -1,10 +1,16 @@
 package server;
 
-import java.io.*;
-import objects.TournamentModuleSettingsMessage;
-import utility.FileUtils;
-
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Vector;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
@@ -13,10 +19,18 @@ import com.eclipsesource.json.JsonValue;
 
 import objects.BWAPISettings;
 import objects.Bot;
+import objects.BotVO;
+import objects.ExcludeFromResultsVO;
 import objects.Map;
+import objects.MapVO;
+import objects.TournamentModuleSettingsMessage;
+import objects.TournamentModuleSettingsVO;
+import utility.FileUtils;
+import utility.JSONUtil;
 
 public class ServerSettings
 {
+	static final private Logger LOG = LoggerFactory.getLogger(ServerSettings.class);
 	public Vector<Bot> 		BotVector 			= new Vector<Bot>();
 	public Vector<Map> 		MapVector 			= new Vector<Map>();
 	
@@ -25,11 +39,15 @@ public class ServerSettings
 	public String			ServerReplayDir		= "replays/";
 	public String			ServerRequiredDir	= "required/";
 	public String			ServerBotDir		= "bots/";
+	public String	ServerSettingFileNm	= null;
 	
+	public String			SendUrl				= "/";
 	public int				ServerPort			= -1;
+	public int				RecvPort			= -1;
 	public String			GamesListFile		= null;
 	public String			ResultsFile			= null;
 	public String 			ClearResults	 	= "ask";
+	public String			ResumeTournament	= "ask";
 	public boolean			DetailedResults		= false;
 	public boolean			StartGamesSimul		= false;
 	public String			TournamentType		= "AllVsAll";
@@ -69,7 +87,8 @@ public class ServerSettings
 	{	
 		try
 		{
-			BufferedReader br = new BufferedReader(new FileReader("server_settings.JSON"));
+			this.ServerSettingFileNm = filename;
+			BufferedReader br = new BufferedReader(new FileReader(filename));
 			JsonObject jo = Json.parse(br).asObject();
 			br.close();
 			
@@ -105,8 +124,11 @@ public class ServerSettings
 			GamesListFile = jo.get("gamesListFile").asString();
 			ResultsFile = jo.get("resultsFile").asString();
 			DetailedResults = jo.get("detailedResults").asBoolean(); 
+			SendUrl = jo.get("sendUrl").asString();
 			ServerPort = jo.get("serverPort").asInt();
+			RecvPort = jo.get("recvPort").asInt();
 			ClearResults = jo.get("clearResults").asString();
+			ResumeTournament = jo.get("resumeTournament").asString();
 			StartGamesSimul = jo.get("startGamesSimultaneously").asBoolean();
 			TournamentType = jo.get("tournamentType").asString();
 			EnableBotFileIO = jo.get("enableBotFileIO").asBoolean();
@@ -137,14 +159,13 @@ public class ServerSettings
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error parsing settings file, exiting\n");
-			e.printStackTrace();
+			LOG.error("Error parsing settings file, exiting\n", e);
 			System.exit(-1);
 		}
 		
 		if (!checkValidSettings())
 		{
-			System.err.println("\n\nError in server set-up, please check documentation: http://www.cs.mun.ca/~dchurchill/starcraftaicomp/tm.shtml#ss");
+			LOG.error("\n\nError in server set-up, please check documentation: http://www.cs.mun.ca/~dchurchill/starcraftaicomp/tm.shtml#ss");
 			System.exit(0);
 		}
 	}
@@ -154,32 +175,49 @@ public class ServerSettings
 		boolean valid = true;
 		
 		// check if all setting variables are valid
-		if (BotVector.size() <= 1) 		{ System.err.println("ServerSettings: Must have at least 2 bots in settings file"); valid = false; }
-		if (MapVector.size() <= 0)		{ System.err.println("ServerSettings: Must have at least 1 map in settings file"); valid = false; }
-		if (ServerDir == null)			{ System.err.println("ServerSettings: ServerDir not specified in settings file"); valid = false; }
-		if (GamesListFile == null)		{ System.err.println("ServerSettings: GamesListFile not specified in settings file"); valid = false; }
-		if (ResultsFile == null)		{ System.err.println("ServerSettings: ResultsFile must be specified in settings file"); valid = false; }
-		if (ServerPort == -1)			{ System.err.println("ServerSettings: ServerPort must be specified as an integer in settings file"); valid = false; }
+		if (MapVector.size() <= 0)		{ LOG.error("ServerSettings: Must have at least 1 map in settings file"); valid = false; }
+		if (ServerDir == null)			{ LOG.error("ServerSettings: ServerDir not specified in settings file"); valid = false; }
+		if (GamesListFile == null)		{ LOG.error("ServerSettings: GamesListFile not specified in settings file"); valid = false; }
+		if (ResultsFile == null)		{ LOG.error("ServerSettings: ResultsFile must be specified in settings file"); valid = false; }
+		if (ServerPort == -1)			{ LOG.error("ServerSettings: ServerPort must be specified as an integer in settings file"); valid = false; }
+		if (RecvPort == -1)				{ LOG.error("ServerSettings: RecvPort must be specified as an integer in settings file"); valid = false; }
 		
 		if (!ClearResults.equalsIgnoreCase("yes") && !ClearResults.equalsIgnoreCase("no") && !ClearResults.equalsIgnoreCase("ask"))
 		{
-			System.err.println("ServerSettings: ClearResultsFile invalid option: " + ClearResults);
+			LOG.error("ServerSettings: ClearResultsFile invalid option: " + ClearResults);
+			valid = false;
+		}
+		
+		if (!ResumeTournament.equalsIgnoreCase("yes") && !ResumeTournament.equalsIgnoreCase("no") && !ResumeTournament.equalsIgnoreCase("ask"))
+		{
+			LOG.error("ServerSettings: ResumeTournament invalid option: " + ResumeTournament);
 			valid = false;
 		}
 		
 		// check if all required files are present
-		if (!new File(ServerReplayDir).exists())
+		if (!FileUtils.CreateDirectory(ServerReplayDir))
 		{
-			FileUtils.CreateDirectory(ServerReplayDir);
-			if (!new File(ServerReplayDir).isDirectory())
-			{
-				System.err.println("ServerSettings: Replay Dir (" + ServerReplayDir + ") does not exist and could not be created");
-				valid = false;
-			}
+			LOG.error("ServerSettings: Replay Dir (" + ServerReplayDir + ") does not exist and could not be created");
+			valid = false;
 		}
-		if (!new File(ServerBotDir).exists()) 		{ System.err.println("ServerSettings: Bot Dir (" + ServerBotDir + ") does not exist"); valid = false; }
-		if (!new File(ServerRequiredDir).exists()) 	{ System.err.println("ServerSettings: Required Files Dir (" + ServerRequiredDir + ") does not exist"); valid = false; }
+		if (!FileUtils.CreateDirectory(ServerBotDir)) 		{ LOG.error("ServerSettings: Bot Dir (" + ServerBotDir + ") does not exist"); valid = false; }
+		if (!FileUtils.CreateDirectory(ServerRequiredDir)) 	{ LOG.error("ServerSettings: Required Files Dir (" + ServerRequiredDir + ") does not exist"); valid = false; }
 		
+		// Check if all the maps exist
+		/*for (Map m : MapVector)
+		{
+			String mapLocation = ServerRequiredDir + "Starcraft/" + m.getMapLocation();
+			if (!new File(mapLocation).exists())
+			{
+				System.err.println("Map Error: " + m.getMapName() + " file does not exist at specified location: " + mapLocation); valid = false;
+			}
+		}*/
+		
+		return valid && checkBotValidation();
+	}
+	
+	private boolean checkBotValidation() {
+		boolean valid = true;
 		// check all bot directories
 		for (Bot b : BotVector)
 		{
@@ -192,31 +230,90 @@ public class ServerSettings
 			String botBWAPIReq  = ServerRequiredDir + "Required_" + b.getBWAPIVersion() + ".zip";
 			
 			// Check if all the bot files exist
-			if (!new File(botDir).exists()) 		{ System.err.println("Bot Error: " + b.getName() + " bot directory " + botDir + " does not exist."); valid = false; }
-			if (!new File(botAIDir).exists()) 		{ System.err.println("Bot Error: " + b.getName() + " bot AI directory " + botAIDir + " does not exist."); valid = false; }
-			if (!new File(botDLLFile).exists()) 	{ System.err.println("Bot Error: " + b.getName() + " bot dll file " + botDLLFile + " does not exist."); valid = false; }
-			if (!new File(botWriteDir).exists()) 	{ System.err.println("Bot Error: " + b.getName() + " bot write directory " + botWriteDir + " does not exist."); valid = false; }
-			if (!new File(botReadDir).exists()) 	{ System.err.println("Bot Error: " + b.getName() + " bot read directory " + botReadDir + " does not exist."); valid = false; }
-			if (!new File(botBWAPIReq).exists()) 	{ System.err.println("Bot Error: " + b.getName() + " bot required BWAPI files " + botBWAPIReq + " does not exist."); valid = false; }
-			
+			if (!FileUtils.CreateDirectory(botDir)) 		{ LOG.error("Bot Error: " + b.getName() + " bot directory " + botDir + " does not exist."); valid = false; }
+			if (!FileUtils.CreateDirectory(botAIDir)) 		{ LOG.error("Bot Error: " + b.getName() + " bot AI directory " + botAIDir + " does not exist."); valid = false; }
+			if (!b.isProxyBot() && !new File(botDLLFile).exists()) 	{ LOG.error("Bot Error: " + b.getName() + " bot dll file " + botDLLFile + " does not exist."); valid = false; }
+			if (!FileUtils.CreateDirectory(botWriteDir)) 	{ LOG.error("Bot Error: " + b.getName() + " bot write directory " + botWriteDir + " does not exist."); valid = false; }
+			if (!FileUtils.CreateDirectory(botReadDir)) 	{ LOG.error("Bot Error: " + b.getName() + " bot read directory " + botReadDir + " does not exist."); valid = false; }
+			if (!new File(botBWAPIReq).exists()) 	{ LOG.error("Bot Error: " + b.getName() + " bot required BWAPI files " + botBWAPIReq + " does not exist."); valid = false; }
+
 			// Check if the bot is proxy and the proxy bot exists
 			if (b.isProxyBot() && !new File(proxyScript).exists()) 
-			{ 
-				System.err.println("Bot Error: " + b.getName() + " listed as proxy but " + proxyScript + " does not exist."); 
-				valid = false; 
+			{
+				try (BufferedWriter bw = new BufferedWriter(new FileWriter(botAIDir + "run_proxy.bat"))) {
+					bw.write("if \"%STARCRAFT_HOME%\" == \"\" (");
+					bw.newLine();
+					bw.write("	setx STARCRAFT_HOME c:\\Starcraft");
+					bw.newLine();
+					bw.write(")");
+					bw.write("cd %STARCRAFT_HOME%");
+					bw.newLine();
+					bw.write("%STARCRAFT_HOME%\\bwapi-data\\AI\\" + b.getName() + ".exe");
+				} catch (IOException e) {
+					LOG.error(e.getMessage(), e);
+				}
+				
+				LOG.info("Bot : " + b.getName() + " listed as proxy but " + proxyScript + " does not exist. file created!"); 
 			}
 		}
-		
-		// Check if all the maps exist
-		/*for (Map m : MapVector)
-		{
-			String mapLocation = ServerRequiredDir + "Starcraft/" + m.getMapLocation();
-			if (!new File(mapLocation).exists())
-			{
-				System.err.println("Map Error: " + m.getMapName() + " file does not exist at specified location: " + mapLocation); valid = false;
-			}
-		}*/
-		
+
 		return valid;
+	}
+
+	public void addBot(String name, String race, String type, String bwapiVersion) {
+		if (getBotFromBotName(name) == null) {
+			Bot bot = new Bot(name, race, type, bwapiVersion);
+			BotVector.add(bot);
+			checkBotValidation();
+			writeSettingsFile();
+		}
+	}
+	
+	private void writeSettingsFile() {
+		try {
+			Vector<BotVO> BotVOVector = new Vector<BotVO>();
+			for (Bot b : BotVector) {
+				BotVOVector.add(new BotVO(b));
+			}
+
+			Vector<MapVO> MapVOVector = new Vector<MapVO>();
+			for (Map m : MapVector) {
+				MapVOVector.add(new MapVO(m));
+			}
+			
+			Vector<ExcludeFromResultsVO> ExcludeVOVector = new Vector<ExcludeFromResultsVO>();
+			for (String s : ExcludeFromResults) {
+				ExcludeVOVector.add(new ExcludeFromResultsVO(s));
+			}
+			
+			TournamentModuleSettingsVO tms = new TournamentModuleSettingsVO(tmSettings);
+
+			LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+
+			map.put("bots", BotVOVector);
+			map.put("maps", MapVOVector);
+			map.put("gamesListFile", GamesListFile);
+			map.put("resultsFile", ResultsFile);
+			map.put("detailedResults", DetailedResults);
+			map.put("sendUrl", SendUrl);
+			map.put("serverPort", ServerPort);
+			map.put("recvPort", RecvPort);
+			map.put("clearResults", ClearResults);
+			map.put("resumeTournament", ResumeTournament);
+			map.put("startGamesSimultaneously", StartGamesSimul);
+			map.put("tournamentType", TournamentType);
+			map.put("enableBotFileIO", EnableBotFileIO);
+			map.put("excludeFromResults", ExcludeVOVector);
+			map.put("tournamentModuleSettings", tms);
+
+			BufferedWriter bw = new BufferedWriter(new FileWriter(this.ServerSettingFileNm));
+
+			bw.write(JSONUtil.writeValue(map, true));
+
+			bw.close();
+		} catch (Exception e) {
+			LOG.error("Error parsing settings file, exiting\n", e);
+			System.exit(-1);
+		}
 	}
 }

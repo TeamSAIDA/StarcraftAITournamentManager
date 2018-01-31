@@ -1,1 +1,2 @@
-java -jar server.jar server_settings.json
+title 경진대회 토너먼트 서버
+java -cp .\;.\lib\jackson-core-asl-1.9.13.jar;.\lib\jackson-mapper-asl-1.9.13.jar;.\lib\mina-core-2.0.16.jar;.\lib\mina-http-2.0.16.jar;.\lib\slf4j-api-1.7.7.jar;.\lib\logback-classic-1.1.2.jar;.\lib\logback-core-1.1.2.jar;.\server.jar server.ServerMain server_settings.json

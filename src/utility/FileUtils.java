@@ -12,9 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class FileUtils 
 {
-
+	static final private Logger LOG = LoggerFactory.getLogger(FileUtils.class);
 	public static void writeToFile(String data, String filename)
 	{
 		try
@@ -33,7 +36,7 @@ public class FileUtils
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 		
 	}
@@ -54,7 +57,7 @@ public class FileUtils
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 	}
 	
@@ -73,18 +76,20 @@ public class FileUtils
 		}
 	}
 	
-	public static void CreateDirectory(String dir)
+	public static boolean CreateDirectory(String dir)
 	{
 		File f = new File(dir); 
 		if (!f.exists())
 		{
-			f.mkdirs();
+			return f.mkdirs();
 		}
+		
+		return f.isDirectory();
 	}
 	
 	public static void DeleteDirectory(File f) 
 	{
-		System.out.println("Deleting directory:" + f.getAbsolutePath());
+		LOG.debug("Deleting directory:" + f.getAbsolutePath());
 		DeleteRecursive(f);
 	}
 	
@@ -101,7 +106,7 @@ public class FileUtils
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 	}
 	
@@ -132,7 +137,7 @@ public class FileUtils
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 	}
 	
@@ -144,7 +149,7 @@ public class FileUtils
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 	}
 
@@ -165,7 +170,7 @@ public class FileUtils
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 		
 	}

@@ -10,11 +10,15 @@ import java.text.*;
 
 import javax.imageio.ImageIO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import objects.*;
 import utility.*;
 
 public class Client extends Thread 
 {
+	static final private Logger LOG = LoggerFactory.getLogger(Client.class);
 	protected ClientStatus status;
 	
 	public ClientSettings settings;
@@ -105,7 +109,7 @@ public class Client extends Thread
 	
 	public synchronized void setStatus(ClientStatus s, Game g) 
 	{
-		System.out.println("\n\nNEW STATUS: " + s + "\n\n");
+		LOG.debug("\n\nNEW STATUS: " + s + "\n\n");
 		this.status = s;
 		updateGUI("" + status, haveGameStateFile ? "STATEFILE" : "NOSTATE", starcraftIsRunning ? "STARCRAFT" : "NOSTARCRAFT", "sendStatus", "sendStatus");
 		log("Status: " + status + "\n");
@@ -219,7 +223,7 @@ public class Client extends Thread
 					if (crash)
 					{
 						log("MainLoop: We crashed, prepping crash\n");
-						System.out.println("MONITOR: Crash detected, shutting down game");
+						LOG.debug("MONITOR: Crash detected, shutting down game");
 						setEndTime();
 						prepCrash(gameState);
 					}
@@ -292,6 +296,11 @@ public class Client extends Thread
 		{
 			shutDown();
 		}
+		else if (m instanceof KeepAliveMessage)
+		{
+			listener.sendMessageToServer(m);
+			LOG.debug(m + " sent!");
+		}
 	}
 	
 	public boolean canStartStarCraft()
@@ -301,9 +310,9 @@ public class Client extends Thread
 	
 	public void receiveInstructions(InstructionMessage instructions) 
 	{
-		System.out.println("Recieved Instructions");
-		System.out.println("Game id -> " + instructions.game_id);
-		System.out.println(instructions.hostBot.getName() + " vs. " + instructions.awayBot.getName());
+		LOG.debug("Recieved Instructions");
+		LOG.debug("Game id -> " + instructions.game_id);
+		LOG.debug(instructions.hostBot.getName() + " vs. " + instructions.awayBot.getName());
 		
 		previousInstructions = instructions;
 	}
@@ -376,7 +385,7 @@ public class Client extends Thread
 		}
 		else
 		{
-			System.out.println("Tried to start StarCraft when not ready");
+			LOG.debug("Tried to start StarCraft when not ready");
 		}
 	}
 	
@@ -387,7 +396,8 @@ public class Client extends Thread
 	
 	void prepReply(TournamentModuleState gameState) 
 	{
-		Game retGame = new Game(	previousInstructions.game_id, 
+		Game retGame = new Game(	previousInstructions.turn,
+									previousInstructions.game_id, 
 									previousInstructions.round_id,
 									previousInstructions.hostBot, 
 									previousInstructions.awayBot, 
@@ -422,7 +432,8 @@ public class Client extends Thread
 
 	void prepCrash(TournamentModuleState gameState) 
 	{		
-		Game retGame = new Game(	previousInstructions.game_id, 
+		Game retGame = new Game(	previousInstructions.turn,
+									previousInstructions.game_id, 
 									previousInstructions.round_id,
 									previousInstructions.hostBot, 
 									previousInstructions.awayBot, 
@@ -480,6 +491,12 @@ public class Client extends Thread
 		System.exit(0);
 	}
 	
+	public void gameInit() {
+		ClientCommands.Client_KillStarcraft();
+		ClientCommands.Client_KillExcessWindowsProccess(startingproc);
+		ClientCommands.Client_KillStarcraft();
+	}
+
 	private void sendFilesToServer(boolean retryWait)
 	{
 		// sleep 5 seconds to make sure starcraft wrote the replay file correctly
@@ -530,7 +547,7 @@ public class Client extends Thread
 	public void setEndTime() 
 	{
 		this.endTime = System.currentTimeMillis();
-		System.out.println("Game lasted " + (this.endTime - this.startTime) + " ms");
+		LOG.debug("Game lasted " + (this.endTime - this.startTime) + " ms");
 	}
 	
 	public long getElapsedTime() 

@@ -3,9 +3,9 @@ call clean.bat
 @echo on
 
 :: Class path is required here so that any jar files in libs/ are used
-javac -cp client/*.java;libs/*;objects/*.java;server/*.java;utility/*.java; client/ClientMain.java
-javac -cp client/*.java;libs/*;objects/*.java;server/*.java;utility/*.java; server/ServerMain.java
-javac -cp client/*.java;libs/*;objects/*.java;server/*.java;utility/*.java; utility/ResultsParserMain.java
+javac -cp ../lib/*;client/*.java;libs/*;objects/*.java;server/*.java;utility/*.java; client/ClientMain.java
+javac -cp ../lib/*;client/*.java;libs/*;objects/*.java;server/*.java;utility/*.java; server/ServerMain.java
+javac -cp ../lib/*;client/*.java;libs/*;objects/*.java;server/*.java;utility/*.java; utility/ResultsParserMain.java
 
 :: Extract libraries from jar(s) before packaging the TM jars
 jar xf libs/minimal-json-0.9.4.jar com/eclipsesource/json/

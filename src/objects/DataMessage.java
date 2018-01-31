@@ -2,10 +2,14 @@ package objects;
 
 import java.io.File;
 
-import utility.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import utility.ZipTools;
 
 public class DataMessage implements Message
 {
+	private static final Logger LOG = LoggerFactory.getLogger(DataMessage.class);
 	/**
 	 * 
 	 */
@@ -68,7 +72,7 @@ public class DataMessage implements Message
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			System.exit(-1);
 		}
 	}
@@ -81,7 +85,7 @@ public class DataMessage implements Message
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			System.exit(-1);
 		}
 	}
@@ -94,7 +98,7 @@ public class DataMessage implements Message
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			System.exit(-1);
 		}
 	}

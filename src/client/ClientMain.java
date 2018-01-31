@@ -1,13 +1,16 @@
 package client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClientMain 
 {	
+	static final private Logger LOG = LoggerFactory.getLogger(ClientMain.class);
 	public static void main(String[] args) throws Exception
 	{
 		if (!System.getProperty("os.name").contains("Windows"))
 		{
-			System.err.println("Sorry, Client can only be run on Windows.");
+			LOG.error("Sorry, Client can only be run on Windows.");
 		}
 		
 		if (args.length == 1)
@@ -16,7 +19,12 @@ public class ClientMain
 		}
 		else
 		{
-			ClientSettings.Instance().parseSettingsFile("client_settings.json");
+			try {
+				ClientSettings.Instance().parseSettingsFile("client_settings.json");
+			} catch (Exception e) {
+				LOG.error("\n\nPlease provide client settings file as command line argument.\n", e);
+				System.exit(-1);
+			}
 		}
 		
 		Client client = new Client();

@@ -84,7 +84,7 @@ public class ResultsParser
 		return results.size();
 	}
 		
-	public void parseResults(Vector<GameResult> results)
+	private void parseResults(Vector<GameResult> results)
 	{
 		for (int i=0; i<numBots; ++i)
 		{
@@ -264,11 +264,6 @@ public class ResultsParser
 		FileUtils.CreateDirectory("html/results");
 		FileUtils.writeToFile(winPercentage.toString(), "html/results/winpercentage.js");
 		FileUtils.writeToFile(roundWins.toString(), "html/results/roundwins.js");
-	}
-	
-	public boolean hasGameResult(int gameID)
-	{
-		return gameIDs.contains(gameID);
 	}
 	
 	public void writeDetailedResultsJSON()
@@ -529,17 +524,17 @@ public class ResultsParser
 	
 	public void parseLine(String line)
 	{
-		if (line.trim().length() > 0)
+		if (line.trim().length() > 0 && !line.startsWith("#"))
 		{
 			String[] data = line.trim().split(" +");
 			
-			int gameID = Integer.parseInt(data[0]);
+			int gameID = Integer.parseInt(data[1]);
 			gameIDs.add(gameID);
 			
 			//filter for excluded bots
 			for (String excludedBot : ServerSettings.Instance().ExcludeFromResults)
 			{
-				if (excludedBot.equals(data[2]) || excludedBot.equals(data[3]))
+				if (excludedBot.equals(data[3]) || excludedBot.equals(data[4]))
 				{
 					return;
 				}

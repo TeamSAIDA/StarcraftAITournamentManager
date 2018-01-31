@@ -16,10 +16,7 @@ public class Bot implements Serializable
 
 	public Bot(String name, String race, String type, String bwapiVersion)
 	{
-		this.name = name;
-		this.race = race;
-		this.type = type;
-		this.bwapiVersion = bwapiVersion;
+		this(name, race, type, bwapiVersion, new Vector<String>());
 	}
 	
 	public Bot(String name, String race, String type, String bwapiVersion, Vector<String> requirements)
@@ -63,7 +60,7 @@ public class Bot implements Serializable
 	
 	public boolean hasRequirements()
 	{
-		if (requirements == null)
+		if (requirements == null || requirements.isEmpty())
 		{
 			return false;
 		}

@@ -19,10 +19,14 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import server.Server;
 
 public class ImageWindow
 {
+	static private final Logger LOG = LoggerFactory.getLogger(ImageWindow.class);
 	private BufferedImage bi;
 	private JFrame frame;
 	private JPanel panel;
@@ -81,8 +85,7 @@ public class ImageWindow
                     }
 
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					LOG.error(e1.getMessage(), e1);
 				}
             }
         });

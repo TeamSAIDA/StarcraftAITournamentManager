@@ -3,12 +3,16 @@ package client;
 import java.io.*;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import objects.*;
 import utility.FileUtils;
 import utility.WindowsCommandTools;
 
 public class ClientCommands
 {
+	static final private Logger LOG = LoggerFactory.getLogger(ClientCommands.class);
 	public static void Client_InitialSetup()
 	{
 		Client.log("      Client_InitialSetup()\n");
@@ -68,7 +72,7 @@ public class ClientCommands
 		
 		while (WindowsCommandTools.IsWindowsProcessRunning("StarCraft.exe"))
 		{
-			System.out.println("Killing Starcraft...  ");
+			LOG.debug("Killing Starcraft...  ");
 			WindowsCommandTools.RunWindowsCommand("taskkill /T /F /IM StarCraft.exe", true, false);
 			try { Thread.sleep(100); } catch (InterruptedException e) {}
 		}
@@ -101,14 +105,14 @@ public class ClientCommands
 			File oldGameState = new File(ClientSettings.Instance().ClientStarcraftDir + "gameState.txt");
 			while (oldGameState.exists()) 
 			{
-				System.out.println("Old game state file exists, deleting... ");
+				LOG.debug("Old game state file exists, deleting... ");
 				oldGameState.delete();
 				try { Thread.sleep(100); } catch (InterruptedException e) {}
 			}
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 	}
 
@@ -145,7 +149,7 @@ public class ClientCommands
 		} 
 		catch (Exception e) 
 		{
-			System.err.println("Error: " + e.getMessage());
+			LOG.error("Error: " + e.getMessage());
 		}
 	}
 	
@@ -335,7 +339,7 @@ public class ClientCommands
 		} 
 		catch (Exception e) 
 		{
-			System.err.println("Error: " + e.getMessage());
+			LOG.error("Error: " + e.getMessage());
 		}
 	}
 }

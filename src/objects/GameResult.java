@@ -6,6 +6,7 @@ import server.ServerSettings;
 
 public class GameResult implements Comparable<Object>
 {
+	public int turn					= -1;
 	public int gameID				= -1;
 	public int roundID				= -1;
 	
@@ -58,37 +59,38 @@ public class GameResult implements Comparable<Object>
 	{
 		String[] data = dataLine.trim().split(" +");
 		
-		gameID 				= Integer.parseInt(data[0]);
-		roundID 			= Integer.parseInt(data[1]);
+		turn 				= Integer.parseInt(data[0]);
+		gameID 				= Integer.parseInt(data[1]);
+		roundID 			= Integer.parseInt(data[2]);
 		
-		hostName			= data[2];
-		awayName			= data[3];
-		mapName				= data[4];
+		hostName			= data[3];
+		awayName			= data[4];
+		mapName				= data[5];
 		
-		if (data[5].equals("true"))
+		if (data[6].equals("true"))
 		{
 			hostWon = true;
 		}
 		
-		if (data[6].equals("true"))
+		if (data[7].equals("true"))
 		{
 			hostCrash = true;
 		}
 		
-		if (data[7].equals("true"))
+		if (data[8].equals("true"))
 		{
 			awayCrash = true;
 		}
 		
-		hourTimeout			= Boolean.getBoolean(data[8]);
+		hourTimeout			= Boolean.getBoolean(data[9]);
 		
-		hostScore			= Integer.parseInt(data[9]) != 0 ? Integer.parseInt(data[9]) : hostScore;
-		awayScore			= Integer.parseInt(data[10]) != 0 ? Integer.parseInt(data[10]) : awayScore;
+		hostScore			= Integer.parseInt(data[10]) != 0 ? Integer.parseInt(data[10]) : hostScore;
+		awayScore			= Integer.parseInt(data[11]) != 0 ? Integer.parseInt(data[11]) : awayScore;
 		
-		finalFrame			= Integer.parseInt(data[11]) > finalFrame ? Integer.parseInt(data[11]) : finalFrame;
+		finalFrame			= Integer.parseInt(data[12]) > finalFrame ? Integer.parseInt(data[12]) : finalFrame;
 		
-		hostTime			= Integer.parseInt(data[12]) != 0 ? Integer.parseInt(data[12]) : hostTime;
-		awayTime			= Integer.parseInt(data[13]) != 0 ? Integer.parseInt(data[13]) : awayTime;
+		hostTime			= Integer.parseInt(data[13]) != 0 ? Integer.parseInt(data[13]) : hostTime;
+		awayTime			= Integer.parseInt(data[14]) != 0 ? Integer.parseInt(data[14]) : awayTime;
 		
 		int numTimers = ServerSettings.Instance().tmSettings.TimeoutLimits.size();
 		for (int i=0; i<numTimers; ++i)
@@ -99,7 +101,7 @@ public class GameResult implements Comparable<Object>
 				{
 					try
 					{
-						hostTimers.set(i, Integer.parseInt(data[14 + i]));
+						hostTimers.set(i, Integer.parseInt(data[15 + i]));
 					}
 					catch(java.lang.ArrayIndexOutOfBoundsException ex)
 					{
@@ -110,7 +112,7 @@ public class GameResult implements Comparable<Object>
 				{
 					try
 					{
-						awayTimers.set(i, Integer.parseInt(data[14 + numTimers + i]));
+						awayTimers.set(i, Integer.parseInt(data[15 + numTimers + i]));
 					}
 					catch(java.lang.ArrayIndexOutOfBoundsException ex)
 					{
@@ -122,7 +124,7 @@ public class GameResult implements Comparable<Object>
 			{
 				try
 				{
-					hostTimers.add(Integer.parseInt(data[14 + i]));
+					hostTimers.add(Integer.parseInt(data[15 + i]));
 				}
 				catch(java.lang.ArrayIndexOutOfBoundsException ex)
 				{
@@ -130,7 +132,7 @@ public class GameResult implements Comparable<Object>
 				}
 				try
 				{
-					awayTimers.add(Integer.parseInt(data[14 + numTimers + i]));
+					awayTimers.add(Integer.parseInt(data[15 + numTimers + i]));
 				}
 				catch(java.lang.ArrayIndexOutOfBoundsException ex)
 				{
@@ -140,20 +142,20 @@ public class GameResult implements Comparable<Object>
 		}
 		
 		// if there's an address field
-		if (data.length > 14 + numTimers*2)
+		if (data.length > 15 + numTimers*2)
 		{
-			hostAddress = data[14 + numTimers*2];
-			awayAddress = data[14 + numTimers*2 + 1];
+			hostAddress = data[15 + numTimers*2];
+			awayAddress = data[15 + numTimers*2 + 1];
 			
 			// if there's a date field
-			if (data.length > 14 + numTimers*2 + 2)
+			if (data.length > 15 + numTimers*2 + 2)
 			{			
-				startDate = data[14 + numTimers*2 + 2];
+				startDate = data[15 + numTimers*2 + 2];
 				
 				// record the finish date only from the second person to report
 				if (!firstReport.equalsIgnoreCase("Error"))
 				{
-					finishDate = data[14 + numTimers*2 + 3];
+					finishDate = data[15 + numTimers*2 + 3];
 				}
 			}
 		}
@@ -169,7 +171,7 @@ public class GameResult implements Comparable<Object>
 			hostWon = true;
 		}
 			
-		int tempFinalFrame 	= Integer.parseInt(data[11]);
+		int tempFinalFrame 	= Integer.parseInt(data[12]);
 		
 		// if this is the first bot to report
 		if (firstReport.equals("Error"))
@@ -275,8 +277,8 @@ public class GameResult implements Comparable<Object>
 	
 	public String toString()
 	{
-		String s = String.format("%7d %5d %15s %15s %15s %8d %15s %15s %25s %6b %6b%6b %8d %8d %10d %10d \n",
-				this.gameID, this.roundID, this.hostName, 
+		String s = String.format("%7d %7d %5d %15s %15s %15s %8d %15s %15s %25s %6b %6b%6b %8d %8d %10d %10d \n",
+				this.turn, this.gameID, this.roundID, this.hostName, 
 				this.awayName, this.winName, this.finalFrame, this.crashName, this.timeOutName, this.mapName, 
 				this.hostCrash, this.awayCrash, 
 				this.hourTimeout, this.hostScore, this.awayScore, 
@@ -303,7 +305,8 @@ public class GameResult implements Comparable<Object>
 		String loserName = hostWon ? awayName : hostName;
 		
 		String s = String
-				.format("%7d %5d %15s %15s %15s %15s %25s %8d %8d %8d",
+				.format("%7d %7d %5d %15s %15s %15s %15s %25s %8d %8d %8d",
+						turn,
 						gameID, 
 						roundID,
 						winnerName,
@@ -333,6 +336,82 @@ public class GameResult implements Comparable<Object>
 		return s;
 	}
 	
+	public String toJSONString() {
+		Bot hostBot = ServerSettings.Instance().getBotFromBotName(hostName);
+		Bot awayBot = ServerSettings.Instance().getBotFromBotName(awayName);
+		
+		return String
+				.format("{\"gameId\": %d, \"myBotNm\" : \"%s\", \"myBotRace\" : \"%s\", \"myBWAPIVer\" : \"%s\", "
+						+ "\"enemyBotNm\" :  \"%s\", \"enemyBotRace\" : \"%s\", \"enemyBWAPIVer\" : \"%s\", "
+						+ "\"rsltCd\" : \"%s\", \"mapCd\" : \"%s\"}",
+						gameID, hostName, hostBot.getRace(), hostBot.getBWAPIVersion(),
+						awayName, awayBot.getRace(), awayBot.getBWAPIVersion(),
+						this.getRsltCd(),
+						this.getMapCd());
+	}
+	
+	private String getMapCd() {
+		switch (mapName) {
+		case "(2)Benzene.scx":
+			return "01";
+		case "(2)Destination.scx":
+			return "02";
+		case "(2)HeartbreakRidge.scx":
+			return "03";
+		case "(3)Aztec.scx":
+			return "04";
+		case "(3)TauCross.scx":
+			return "05";
+		case "(4)Andromeda.scx":
+			return "06";
+		case "(4)CircuitBreaker.scx":
+			return "07";
+		case "(4)EmpireoftheSun.scm":
+			return "08";
+		case "(4)Fortress.scx":
+			return "09";
+		case "(4)Python.scx":
+			return "10";
+		default:
+			return "ZZ";
+		}
+	}
+
+	private String getRsltCd() {
+		String rsltCd;
+		// 승
+		if (hostWon) {
+			// 03 : 타임아웃 무승부인데 점수로 승리
+			if (hourTimeout) {
+				rsltCd = "03";
+			}
+			// 02 : 상대방의 오류로 승리
+			else if (awayCrash) {
+				rsltCd = "02";
+			}
+			// 01 : 정상 승리
+			else {
+				rsltCd = "01";
+			}
+		}
+		// 패
+		else {
+			// 06 : 타임아웃 무승부인데 점수로 패배
+			if (hourTimeout) {
+				rsltCd = "06";
+			}
+			// 05 : 자신의 오류로 패배
+			else if (hostCrash) {
+				rsltCd = "05";
+			}
+			// 04 : 정상 패배
+			else {
+				rsltCd = "04";
+			}
+		}
+		return rsltCd;
+	}
+
 	public int compareTo(Object other)
 	{
 		return this.gameID - ((GameResult)other).gameID;

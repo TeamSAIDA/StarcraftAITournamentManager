@@ -12,12 +12,24 @@ import java.net.SocketException;
 import java.util.Vector;
 
 import javax.imageio.ImageIO;
-import objects.*;
-import server.Server;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import objects.Bot;
+import objects.ClientPropertyMessage;
+import objects.ClientStatus;
+import objects.ClientStatusMessage;
+import objects.DataMessage;
+import objects.DataType;
+import objects.ImageWindow;
+import objects.InstructionMessage;
+import objects.KeepAliveMessage;
+import objects.Message;
 
 public class ServerClientThread extends Thread implements Comparable<ServerClientThread>
 {
-	
+	private static final Logger LOG = LoggerFactory.getLogger(ServerClientThread.class);
 	public InetAddress 		address;
 	public  InstructionMessage 	lastInstructionSent = null;
 	private Socket 				con;
@@ -57,7 +69,7 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 				if (run)
 				{
 					server.log("Exception in ManagerClientThread, removing client: " + getAddress().toString().replaceFirst("^.*/", "") + "\n");
-					e.printStackTrace();
+					LOG.error(e.getMessage(), e);
 				}
 				server.removeClient(this);
 				run = false;
@@ -75,7 +87,7 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 		catch (Exception e) 
 		{
 			server.log("ManagerClientThread Object Streams could not initialize\n");
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 	}
 	
@@ -120,6 +132,10 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 			{
 				this.properties = ((ClientPropertyMessage) m).properties;
 			}
+			else if (m instanceof KeepAliveMessage) {
+				server.log(((KeepAliveMessage)m).toString() + "\n");
+				LOG.info(((KeepAliveMessage)m).toString());
+			}
 		}
 	}
 	
@@ -148,6 +164,7 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 	public synchronized void sendMessage(Message m) throws Exception
 	{
 		server.log("Sending Message to Client " + getAddress().toString().replaceFirst("^.*/", "") + ": " + m.toString() + "\n");
+		LOG.debug("Sending Message to Client " + getAddress().toString().replaceFirst("^.*/", "") + ": " + m.toString());
 		
 		oos.writeObject(m);
 		oos.flush();
@@ -167,7 +184,7 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			System.exit(-1);
 		}
 	}
@@ -181,7 +198,7 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			System.exit(-1);
 		}
 	}
@@ -195,7 +212,7 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 			System.exit(-1);
 		}
 	}
@@ -230,7 +247,7 @@ public class ServerClientThread extends Thread implements Comparable<ServerClien
 		catch 
 		(IOException e) 
 		{
-			e.printStackTrace();
+			LOG.error(e.getMessage(), e);
 		}
 		
 		run = false;

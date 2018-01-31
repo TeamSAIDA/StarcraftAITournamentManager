@@ -5,8 +5,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Vector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Game implements Serializable
 {
+	static final private Logger LOG = LoggerFactory.getLogger(Game.class);
 	private static final long serialVersionUID = -92847343973391774L;
 
 	private Bot 			homebot;
@@ -19,6 +23,7 @@ public class Game implements Serializable
 
 	private boolean 		hostwon;
 
+	private int 			turn;
 	private int 			gameID;
 
 	private long 			time;
@@ -43,7 +48,7 @@ public class Game implements Serializable
 	private String			finishDate = "unknown";
 	private String			startDate = "unknown";
 
-	public Game(int iD, int roundt, Bot home, Bot away, Map map) 
+	public Game(int turn, int iD, int roundt, Bot home, Bot away, Map map) 
 	{
 		this.round = roundt;
 		finalFrame = 0;
@@ -55,6 +60,7 @@ public class Game implements Serializable
 		awayScore = 0;
 		status = GameStatus.WAITING;
 		hostwon = false;
+		this.turn = turn;
 		gameID = iD;
 		time = 0;
 		this.hostcrash = false;
@@ -66,8 +72,9 @@ public class Game implements Serializable
 	public String getResultString() 
 	{
 		String s = String
-				.format("%7d %5d %20s %20s %35s %6b %6b %6b %6b %8d %8d %8d %10d %10d",
-						this.gameID, 
+				.format("%7d %7d %5d %20s %20s %35s %6b %6b %6b %6b %8d %8d %8d %10d %10d",
+						this.turn,
+						this.gameID,
 						this.round,
 						this.homebot.getName(),
 						this.awaybot.getName(),
@@ -157,7 +164,7 @@ public class Game implements Serializable
 	public String print(boolean detailed) {
 		String ret = "";
 		ret = ret
-				+ ("(" + gameID + ") -> " + this.status + " -> Map: " + this.map
+				+ ("(" + turn + ", " + gameID + ") -> " + this.status + " -> Map: " + this.map
 						.getMapName());
 		if (status == GameStatus.DONE) {
 			if (hostwon) {
@@ -185,6 +192,10 @@ public class Game implements Serializable
 		}
 		ret = ret + "\n";
 		return ret;
+	}
+	
+	public int getTurn() {
+		return turn;
 	}
 
 	public int getGameID() {
@@ -258,14 +269,14 @@ public class Game implements Serializable
 	 */
 	public void calcResult() {
 		if (wasDraw && hostScore != 0 && awayScore != 0) {
-			System.out.print("\nGame " + this.gameID + " was a Draw with "
+			LOG.debug("\nGame " + this.gameID + " was a Draw with "
 					+ hostScore + " to " + awayScore);
 			if (this.hostScore > this.awayScore) {
 				this.hostwon = true;
-				System.out.println("     Host Wins with " + hostScore + "\n");
+				LOG.debug("     Host Wins with " + hostScore + "\n");
 			} else {
 				this.hostwon = false;
-				System.out.println("     Guest Wins with " + awayScore + "\n");
+				LOG.debug("     Guest Wins with " + awayScore + "\n");
 			}
 		}
 	}
