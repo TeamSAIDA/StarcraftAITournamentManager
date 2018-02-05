@@ -131,9 +131,13 @@ public class GameParser
 	public static void addBot(HashMap<String, Object> reqBot) {
 		try
 		{
-			String botName = (String)reqBot.get("botName");
-			ServerSettings.Instance().addBot(botName, (String)reqBot.get("botRace"), (String)reqBot.get("type"), (String)reqBot.get("BWAPIVer"));
-			GameListGenerator.GenerateGames(turn, gameId, (int)reqBot.get("round"), maps, bots, "1VsAll", ServerSettings.Instance().getBotFromBotName(botName));
+			String botName = (String)reqBot.get("bot_name");
+			String botRace = reqBot.get("botRace") == null ? "Terran" : (String)reqBot.get("botRace");
+			String type = reqBot.get("type") == null ? "proxy" : (String)reqBot.get("type");
+			String BWAPIVer = reqBot.get("BWAPIVer") == null ? "BWAPI_412" : (String)reqBot.get("BWAPIVer");
+			int round = reqBot.get("round") == null ? 1 : (int)reqBot.get("round");
+			ServerSettings.Instance().addBot(botName, botRace, type, BWAPIVer);
+			GameListGenerator.GenerateGames(turn, gameId, round, maps, bots, "1VsAll", ServerSettings.Instance().getBotFromBotName(botName));
 
 			BufferedReader br = new BufferedReader(new FileReader(ServerSettings.Instance().GamesListFile));
 			parseGames(br);

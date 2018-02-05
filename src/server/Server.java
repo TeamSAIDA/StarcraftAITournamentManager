@@ -545,21 +545,7 @@ public class Server  extends Thread
     
     void shutDown() 
 	{
-    	try
-    	{
-	        for (int i = 0; i < clients.size(); i++) 
-			{
-	            clients.get(i).sendMessage(new ServerShutdownMessage());
-	        }
-    	}
-    	catch (Exception e)
-    	{
-    		
-    	}
-    	finally
-    	{
-    		System.exit(0);
-    	}
+    	System.exit(0);
     }
 	
 	public void setListener(ServerListenerThread l) 

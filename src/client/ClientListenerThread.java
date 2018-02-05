@@ -123,6 +123,11 @@ public class ClientListenerThread extends Thread
 				
 				setupSocket();
 				setupStreams();
+				
+				if (ClientSettings.Instance().ClientProperties != null)
+				{
+					client.sendProperties(ClientSettings.Instance().ClientProperties);
+				}
 
 				client.setStatus(ClientStatus.READY);
 			}

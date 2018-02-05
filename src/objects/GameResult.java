@@ -261,6 +261,20 @@ public class GameResult implements Comparable<Object>
 			}
 		}
 		
+		// 봇이 오류로 실행되지 않은 경우
+		if (awayScore > 0 && awayScore < 1000) {
+			awayCrash = true;
+			hostWon = true;
+			crashName = awayName;
+		}
+		
+		if (hostScore > 0 && hostScore < 1000) {
+			hostCrash = true;
+			hostWon = false;
+			crashName = hostName;
+		}
+		
+
 		//if no one timed out or crashed, we have someone kicked out
 	/*	if(finalFrame > 0 && !hostCrash && !awayCrash && prevHostWon!=hostWon)
 		{
@@ -337,17 +351,19 @@ public class GameResult implements Comparable<Object>
 	}
 	
 	public String toJSONString() {
-		Bot hostBot = ServerSettings.Instance().getBotFromBotName(hostName);
-		Bot awayBot = ServerSettings.Instance().getBotFromBotName(awayName);
-		
 		return String
-				.format("{\"gameId\": %d, \"myBotNm\" : \"%s\", \"myBotRace\" : \"%s\", \"myBWAPIVer\" : \"%s\", "
-						+ "\"enemyBotNm\" :  \"%s\", \"enemyBotRace\" : \"%s\", \"enemyBWAPIVer\" : \"%s\", "
-						+ "\"rsltCd\" : \"%s\", \"mapCd\" : \"%s\"}",
-						gameID, hostName, hostBot.getRace(), hostBot.getBWAPIVersion(),
-						awayName, awayBot.getRace(), awayBot.getBWAPIVersion(),
-						this.getRsltCd(),
-						this.getMapCd());
+				.format("{\"turn\": %d, \"game_id\": %d, \"my_bot_nm\" : \"%s\", \"enemy_bot_nm\" :  \"%s\", "
+						+ "\"rslt_cd\" : \"%s\", \"map_cd\" : \"%s\"}",
+						turn, gameID, hostName, awayName,
+						this.getRsltCd(), this.getMapCd());
+	}
+
+	public String toBotJSONString() {
+		Bot hostBot = ServerSettings.Instance().getBotFromBotName(hostName);
+
+		return String
+				.format("{\"bot_name\": \"%s\", \"api_version\": \"%s\", \"type_cd\" : \"%s\", \"race_cd\" :  \"%s\"}",
+						hostName, hostBot.getBWAPIVersion(), getTypeCd(hostBot.getType()), getRaceCd(hostBot.getRace()));
 	}
 	
 	private String getMapCd() {
@@ -410,6 +426,24 @@ public class GameResult implements Comparable<Object>
 			}
 		}
 		return rsltCd;
+	}
+	
+	private String getTypeCd(String type) {
+		return "proxy".equals(type) ? "01" : "02";
+	}
+	
+	private String getRaceCd(String race) {
+		switch (race) {
+		case "Random" :
+			return "00";
+		case "Terran" :
+			return "01";
+		case "Protoss" :
+			return "02";
+		case "Zerg" :
+			return "03";
+		}
+		return "04";
 	}
 
 	public int compareTo(Object other)

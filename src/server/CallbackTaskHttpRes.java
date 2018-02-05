@@ -73,6 +73,8 @@ public class CallbackTaskHttpRes extends CallbackTaskAbstract {
 		map.put("httpClientCodec", codec);
 		ioFilterChainBuilder.setFilters((Map<String, ? extends IoFilter>)map);
 		socketConnector.setFilterChainBuilder(ioFilterChainBuilder);
+		
+		setAddress(ServerSettings.Instance().SendIP, ServerSettings.Instance().SendPort);
 	}
 	
 	public void setAddress(String ip, int port) {
@@ -118,22 +120,30 @@ public class CallbackTaskHttpRes extends CallbackTaskAbstract {
 		if (gameResults.isEmpty()) {
 			return null;
 		} else {
+			String botJSONStr = null;
+			
 			jsonStr.setLength(0);
-			jsonStr.append("{[");
+			jsonStr.append("{\"games\" : [");
 			
 			for (GameResult gr : gameResults.values()) {
 				jsonStr.append(gr.toJSONString());
 				jsonStr.append(",");
+				
+				if (botJSONStr == null) {
+					botJSONStr = gr.toBotJSONString();
+				}
 			}
 			
 			jsonStr.setLength(jsonStr.length() - 1);
-			jsonStr.append("}]");
+			jsonStr.append("], \"bot_info\" : ");
+			jsonStr.append(botJSONStr);
+			jsonStr.append("}");
 			return jsonStr.toString();
 		}
 	}
 	
 	@Override
-	protected void sendResult(Object summary) {
+	protected void sendResult(Object summary, String url) {
 		try {
 			String retMsg = (String)summary;
 			
@@ -141,11 +151,12 @@ public class CallbackTaskHttpRes extends CallbackTaskAbstract {
 			byte[] body = retMsg.getBytes();
 			
 			headers.put("Content-Length", body.length + "");
-			headers.put("content-type", "text/plain");
+			headers.put("content-type", "application/json");
 			String queryString = "";
-			HttpRequestImpl msg = new HttpRequestImpl(HttpVersion.HTTP_1_1, HttpMethod.POST, ServerSettings.Instance().SendUrl, queryString, headers);
+			HttpRequestImpl msg = new HttpRequestImpl(HttpVersion.HTTP_1_1, HttpMethod.POST, url, queryString, headers);
 			
 			ConnectFuture connect = socketConnector.connect(address).awaitUninterruptibly();
+			LOG.debug(address.toString() + msg.getRequestPath() + msg.getQueryString());
 			IoSession session = connect.getSession();
 			
 			StringBuilder sb = new StringBuilder(msg.getMethod().toString());

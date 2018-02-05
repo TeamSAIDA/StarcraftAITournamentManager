@@ -2,8 +2,7 @@
 	"bots": [
 		{"BotName": "ZZZKBot", "Race": "Zerg", "BotType": "dll", "BWAPIVersion": "BWAPI_412"},
 		{"BotName": "Iron", "Race": "Terran", "BotType": "dll", "BWAPIVersion": "BWAPI_412"},
-		{"BotName": "Iron2", "Race": "Terran", "BotType": "dll", "BWAPIVersion": "BWAPI_412"},
-		{"BotName": "Iron3", "Race": "Terran", "BotType": "dll", "BWAPIVersion": "BWAPI_412"}
+		{"BotName": "development", "Race": "Terran", "BotType": "proxy", "BWAPIVersion": "BWAPI_412"}
 	],
 	"maps": [
 		{"mapFile": "maps/aiide/(4)Python.scx"}
@@ -11,7 +10,9 @@
 	"gamesListFile": "games.txt",
 	"resultsFile": "results.txt",
 	"detailedResults": false,
-	"sendUrl": "/",
+	"sendUrl": "/tournament",
+	"sendIP": "192.168.10.173",
+	"sendPort": 5000,
 	"serverPort": 1337,
 	"recvPort": 1338,
 	"clearResults": "no",

@@ -37,7 +37,9 @@
 	"gamesListFile": "games.txt",
 	"resultsFile": "results.txt",
 	"detailedResults": false,
-	"sendUrl": "/",
+	"sendUrl": "/tournament",
+	"sendIP": "192.168.10.246",
+	"sendPort": 5000,
 	"serverPort": 1337,
 	"recvPort": 1338,
 	"clearResults": "no",
@@ -45,7 +47,9 @@
 	"startGamesSimultaneously": false,
 	"tournamentType": "1VsAll",
 	"enableBotFileIO": true,
-	"excludeFromResults"		:	[{"BotName": "ExampleExcludedBot"}],
+	"excludeFromResults": [
+		{"BotName": "ExampleExcludedBot"}
+	],
 	"tournamentModuleSettings": {
 		"localSpeed": 0,
 		"frameSkip": 256,

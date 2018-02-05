@@ -12,11 +12,11 @@ public abstract class CallbackTaskAbstract extends TimerTask {
 		Object sr = summaryResult(completeTurn);
 		
 		if (sr != null) {
-			sendResult(sr);
+			sendResult(sr, ServerSettings.Instance().SendUrl);
 		}
 	}
-
+	
 	abstract protected Object summaryResult(int completeTurn);
 
-	abstract protected void sendResult(Object summary);
+	abstract protected void sendResult(Object summary, String url);
 }

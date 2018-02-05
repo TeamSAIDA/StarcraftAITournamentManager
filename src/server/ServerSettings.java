@@ -42,6 +42,8 @@ public class ServerSettings
 	public String	ServerSettingFileNm	= null;
 	
 	public String			SendUrl				= "/";
+	public String			SendIP				= "/";
+	public int				SendPort			= -1;
 	public int				ServerPort			= -1;
 	public int				RecvPort			= -1;
 	public String			GamesListFile		= null;
@@ -125,6 +127,8 @@ public class ServerSettings
 			ResultsFile = jo.get("resultsFile").asString();
 			DetailedResults = jo.get("detailedResults").asBoolean(); 
 			SendUrl = jo.get("sendUrl").asString();
+			SendIP = jo.get("sendIP").asString();
+			SendPort = jo.get("sendPort").asInt();
 			ServerPort = jo.get("serverPort").asInt();
 			RecvPort = jo.get("recvPort").asInt();
 			ClearResults = jo.get("clearResults").asString();
@@ -266,6 +270,7 @@ public class ServerSettings
 			BotVector.add(bot);
 			checkBotValidation();
 			writeSettingsFile();
+			
 		}
 	}
 	
@@ -296,6 +301,8 @@ public class ServerSettings
 			map.put("resultsFile", ResultsFile);
 			map.put("detailedResults", DetailedResults);
 			map.put("sendUrl", SendUrl);
+			map.put("sendIP", SendIP);
+			map.put("sendPort", SendPort);
 			map.put("serverPort", ServerPort);
 			map.put("recvPort", RecvPort);
 			map.put("clearResults", ClearResults);
