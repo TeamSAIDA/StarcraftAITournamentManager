@@ -12,8 +12,12 @@ public class ResultsParserMain
 		}
 		else
 		{
-			System.err.println("\n\nPlease provide server settings file as command line argument.\n");
-			System.exit(-1);
+			try {
+				ServerSettings.Instance().parseSettingsFile("server_settings.json");
+			} catch (Exception e) {
+				System.err.println("\n\nPlease provide server settings file as command line argument.\n");
+				System.exit(-1);
+			}
 		}
 		
 		writeHTMLFiles();

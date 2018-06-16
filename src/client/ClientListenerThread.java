@@ -134,7 +134,7 @@ public class ClientListenerThread extends Thread
 		}	
 	}
 
-	public void sendMessageToServer(Message m)
+	synchronized public void sendMessageToServer(Message m)
 	{
 		try 
 		{

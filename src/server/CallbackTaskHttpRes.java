@@ -1,6 +1,7 @@
 package server;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.net.InetSocketAddress;
 import java.nio.charset.CharacterCodingException;
@@ -84,8 +85,12 @@ public class CallbackTaskHttpRes extends CallbackTaskAbstract {
 	@Override
 	protected Object summaryResult(int completeTurn) {
 		Map<Integer, GameResult> gameResults = new HashMap<>();
+		File file = new File(ServerSettings.Instance().ResultsFile);
 		
-		try (BufferedReader br = new BufferedReader(new FileReader(ServerSettings.Instance().ResultsFile))) {
+		if (!file.exists())
+			return null;
+		
+		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			
 			String line;
 			
